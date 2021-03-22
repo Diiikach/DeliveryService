@@ -5,7 +5,10 @@ class Region(models.Model):
     """
     Representing a region as a number.
     """
-    num: int = models.IntegerField(verbose_name='Region num', unique=True)
+    num: int = models.IntegerField(verbose_name='region num')
+    average_time: int = models.IntegerField(verbose_name='average time of deliver in region', default=0)
+    completed_tasks: int = models.IntegerField(verbose_name='the total number of orders completed in the region',
+                                               default=0)
 
     class Meta:
         verbose_name = 'Region'
@@ -37,11 +40,34 @@ class Courier(models.Model):
 
     # Courier can be of three types - foot, bike, car
     courier_type: str = models.CharField(max_length=4)
+    courier_types = {
+        'car': 9,
+        'bike': 5,
+        'foot': 2,
+    }
 
     working_hours: list = models.ManyToManyField(to=WorkingHours, verbose_name='Hours of Working')
-    regions: list = models.ManyToManyField(to=Region, verbose_name='Active regions')
-    total_sum: int = models.IntegerField(verbose_name='earned money')
-    rating: float = models.FloatField(verbose_name="courier's rating")
+    regions: list = models.ManyToManyField(to=Region, verbose_name='Active regions', blank=True)
+    earned_money: int = models.IntegerField(verbose_name='earned money', default=0, blank=True)
+    rating: float = models.FloatField(verbose_name="courier's rating", default=0, blank=True)
+    completed_tasks: int = models.IntegerField(verbose_name='total delivered orders', default=0, blank=True)
+
+    def count_money(self):
+        n_courier_type = self.courier_types[self.courier_type]
+        for i in range(self.completed_tasks):
+            self.total_sum += 500 * n_courier_type
+
+    def count_rating(self):
+        if self.completed_tasks > 0:
+            pass
+        else:
+            return 0
+        average_time = list()
+        for region in self.regions:
+            average_time.append(region.average_time)
+
+        min_time = min(average_time)
+        self.rating = (60*60 - min(min_time, 60*60)) / (60*60) * 5
 
     def __str__(self):
         return f'Courier({self.courier_id})'
