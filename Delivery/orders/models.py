@@ -12,6 +12,7 @@ class DeliveryHours(WorkingHours):
 class Order(models.Model):
     """
     Entity 'Order' should be a bound object to Entity courier.
+    It should be serialized to json.
     """
     order_id: int = models.IntegerField(primary_key=True, unique=True)
     weight: float = models.FloatField()

@@ -1,3 +1,17 @@
-from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+from django.http import HttpResponse, JsonResponse
 
-# Create your views here.
+
+@require_http_methods(['POST'])
+def create_orders(request):
+    pass
+
+
+@require_http_methods(['POST'])
+def assign_order(reqeust):
+    pass
+
+
+@require_http_methods(['POST'])
+def complete_order(request):
+    pass

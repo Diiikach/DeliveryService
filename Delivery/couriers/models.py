@@ -35,6 +35,7 @@ class WorkingHours(models.Model):
 class Courier(models.Model):
     """
     Main entity in app.
+    It should be serialized to json.
     """
     courier_id: int = models.IntegerField(primary_key=True, unique=True)
 
