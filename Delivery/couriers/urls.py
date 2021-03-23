@@ -1,5 +1,5 @@
 from django.urls import path
-from courers import views
+from couriers import views
 
 urlpatterns = [
     path('/couriers', views.create_couriers),

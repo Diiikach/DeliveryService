@@ -4,11 +4,19 @@ from django.db import models
 class Region(models.Model):
     """
     Representing a region as a number.
+    It should be bound to Courier model.
+    Use it to count earned money and reputation of courier.
     """
+    total_time: int = models.IntegerField(verbose_name='total time to deliver sweets in this region')
     num: int = models.IntegerField(verbose_name='region num')
-    average_time: int = models.IntegerField(verbose_name='average time of deliver in region', default=0)
+    average_time: float = models.FloatField(verbose_name='average time of deliver in region', default=0.0)
     completed_tasks: int = models.IntegerField(verbose_name='the total number of orders completed in the region',
                                                default=0)
+
+    def get_average_time(self) -> float:
+        self.average_time = self.total_time / self.completed_tasks
+        self.save()
+        return self.average_time
 
     class Meta:
         verbose_name = 'Region'
@@ -28,13 +36,12 @@ class WorkingHours(models.Model):
         return self.since + self.to
 
     class Meta:
-        db_table = 'working_hours'
         verbose_name = 'Hours of Working'
 
 
 class Courier(models.Model):
     """
-    Main entity in app.
+    Main entity in the app.
     It should be serialized to json.
     """
     courier_id: int = models.IntegerField(primary_key=True, unique=True)
@@ -57,8 +64,14 @@ class Courier(models.Model):
         n_courier_type = self.courier_types[self.courier_type]
         for i in range(self.completed_tasks):
             self.total_sum += 500 * n_courier_type
+            self.save()
 
-    def count_rating(self):
+    def count_rating(self) -> float:
+        """
+        This function counts rating of Courier instance.
+        If it returns zero, then in JSON will be retured empty list.
+        :return int:
+        """
         if self.completed_tasks > 0:
             pass
         else:
@@ -68,7 +81,9 @@ class Courier(models.Model):
             average_time.append(region.average_time)
 
         min_time = min(average_time)
-        self.rating = (60*60 - min(min_time, 60*60)) / (60*60) * 5
+        self.rating = (60 * 60 - min(min_time, 60 * 60)) / (60 * 60) * 5
+        self.save()
+        return self.rating
 
     def __str__(self):
         return f'Courier({self.courier_id})'

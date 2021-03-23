@@ -8,7 +8,7 @@ def create_orders(request):
 
 
 @require_http_methods(['POST'])
-def assign_order(reqeust):
+def assign_orders(reqeust):
     pass
 
 
