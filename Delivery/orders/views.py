@@ -2,9 +2,9 @@ from django.views.decorators.http import require_http_methods
 from django.http import HttpResponse, JsonResponse
 
 
-@require_http_methods(['POST'])
+@require_http_methods(['GET'])
 def create_orders(request):
-    pass
+    return HttpResponse(content='{"maria": 21}', content_type='application/json', status=201)
 
 
 @require_http_methods(['POST'])

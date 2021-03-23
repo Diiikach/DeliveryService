@@ -7,11 +7,13 @@ class Region(models.Model):
     It should be bound to Courier model.
     Use it to count earned money and reputation of courier.
     """
-    total_time: int = models.IntegerField(verbose_name='total time to deliver sweets in this region')
+    total_time: int = models.IntegerField(verbose_name='total time to deliver sweets in this region', blank=True,
+                                          default=0)
+
     num: int = models.IntegerField(verbose_name='region num')
-    average_time: float = models.FloatField(verbose_name='average time of deliver in region', default=0.0)
+    average_time: float = models.FloatField(verbose_name='average time of deliver in region', default=0.0, blank=True)
     completed_tasks: int = models.IntegerField(verbose_name='the total number of orders completed in the region',
-                                               default=0)
+                                               blank=True, default=0)
 
     def get_average_time(self) -> float:
         self.average_time = self.total_time / self.completed_tasks
@@ -54,7 +56,8 @@ class Courier(models.Model):
         'foot': 2,
     }
 
-    working_hours: list = models.ManyToManyField(to=WorkingHours, verbose_name='Hours of Working')
+    working_hours: list = models.ManyToManyField(to=WorkingHours, verbose_name='Hours of Working', blank=True,
+                                                 null=True)
     regions: list = models.ManyToManyField(to=Region, verbose_name='Active regions', blank=True)
     earned_money: int = models.IntegerField(verbose_name='earned money', default=0, blank=True)
     rating: float = models.FloatField(verbose_name="courier's rating", default=0, blank=True)
@@ -84,6 +87,32 @@ class Courier(models.Model):
         self.rating = (60 * 60 - min(min_time, 60 * 60)) / (60 * 60) * 5
         self.save()
         return self.rating
+
+    @classmethod
+    def create(cls, dantic_object) -> str:
+        """
+        This function creates 'Courier' object by 'Pydantic'
+        object.Also ts creates all depend-object of 'Courier' object and save it.
+        :param dantic_object:
+        :return str:
+        """
+
+        courier_object = cls(courier_id=dantic_object.courier_id, courier_type=dantic_object.courier_type)
+        courier_object.save()
+
+        for timetable in dantic_object.working_hours:
+            since, to = timetable.split('-')
+            timetable_inst = WorkingHours(since=since, to=to)
+            timetable_inst.save()
+            courier_object.working_hours.add(timetable_inst)
+
+        for region in dantic_object.regions:
+            i_region = Region(num=region)
+            i_region.save()
+            courier_object.regions.add(i_region)
+
+        courier_object.save()
+        return "OK"
 
     def __str__(self):
         return f'Courier({self.courier_id})'
