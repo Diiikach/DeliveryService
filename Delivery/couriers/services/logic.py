@@ -30,7 +30,6 @@ def get_couriers_or_errors(content) -> tuple:
         if create_courier_object_from_collection(couriers) == "OK":
 
             for courier in couriers.data:
-                print(courier)
                 sucess.append(serializer.CourierId(id=courier.courier_id))
             return serializer.ResponseCouriers(couriers=sucess).json(), 201
 
@@ -46,3 +45,4 @@ def create_courier_object_from_collection(collection) -> str:
     return "OK"
 
 
+def get_full_courier_info(courier_id) -> tuple:

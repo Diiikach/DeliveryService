@@ -1,4 +1,5 @@
 from django.db import models
+from couriers.services import serializer
 
 
 class Region(models.Model):
@@ -115,6 +116,24 @@ class Courier(models.Model):
 
         courier_object.save()
         return "OK"
+
+    @classmethod
+    def get_py_dantic_from_django_model(cls, courier_id, advanced=False) -> serializer.Courier:
+        """
+        This function return Pydantic 'Courier' object
+        from Django 'Courier object'
+        """
+        courier_inst: Courier = cls.objects.get(courier_id=courier_id)
+        wh: list[str] = [time.since + '-' + time.to for rime in courier_inst.working_hours]
+        regions: list[int] = [region.num for region in courier_inst.regions]
+        courier_type: str = courier_inst.courier_type
+        if advanced:
+            return serializer.AdvancedCourier(courier_id=courier_id, working_hours=wh, regions=regions,
+                                              courier_type=courier_type, earning=courier_inst.earned_money)
+
+        else:
+            return serializer.Courier(courier_id=courier_id, working_hours=wh, regions=regions,
+                                      courier_type=courier_type)
 
     def __str__(self):
         return f'Courier({self.courier_id})'

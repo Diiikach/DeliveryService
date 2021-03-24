@@ -1,6 +1,6 @@
-from pydantic import BaseModel, validator
-from pydantic import BaseModel, validator
 from typing import List
+from pydantic import BaseModel, validator
+from couriers import models
 
 
 class Courier(BaseModel):
@@ -13,15 +13,15 @@ class Courier(BaseModel):
     regions: List[int]
     working_hours: List[str]
 
-    @validator('working_hours')
+    @validator('working_hours', allow_reuse=True)
     def must_be_more_than_one_in_wh(cls, wh):
         if len(wh) == 0:
             raise ValidationError
         else:
             return wh
 
-    @validator('regions')
-    def must_be_more_than_one_in_regions(cls, r):
+    @validator('regions', allow_reuse=True)
+    def little_length(cls, r):
         if len(r) == 0:
             raise ValidationError
         else:
@@ -35,6 +35,10 @@ class DataAboutCouriers(BaseModel):
 class CourierId(BaseModel):
     id: int
 
+
+class AdvancedCourier(Courier):
+    rating: float
+    earning: int
 
 class ResponseCouriers(BaseModel):
     couriers: List[CourierId]

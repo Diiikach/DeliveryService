@@ -4,7 +4,7 @@ from django.http import HttpResponse, JsonResponse
 
 @require_http_methods(['GET'])
 def create_orders(request):
-    return HttpResponse(content='{"maria": 21}', content_type='application/json', status=201)
+    pass
 
 
 @require_http_methods(['POST'])
