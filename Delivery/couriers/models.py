@@ -100,6 +100,8 @@ class Courier(models.Model):
         courier_object = cls(courier_id=dantic_object.courier_id, courier_type=dantic_object.courier_type)
         courier_object.save()
 
+        # Creating 'Workingours' and 'Region' objects to bind that
+        # to new 'Courier' instance
         for timetable in dantic_object.working_hours:
             since, to = timetable.split('-')
             timetable_inst = WorkingHours(since=since, to=to)
