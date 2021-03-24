@@ -3,7 +3,7 @@ from couriers import views
 
 urlpatterns = [
     path('couriers', views.create_couriers),
-    path('couriers/<int:id>', views.get_courier),
+    path('couriers/<int:courier_id>', views.get_courier),
 
 
 ]

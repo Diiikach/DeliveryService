@@ -97,7 +97,12 @@ class Courier(models.Model):
         :param dantic_object:
         :return str:
         """
-
+        try:
+            cls.objects.get(courier_id=dantic_object.courier_id)
+        except:
+            pass
+        else:
+            pass
         courier_object = cls(courier_id=dantic_object.courier_id, courier_type=dantic_object.courier_type)
         courier_object.save()
 
@@ -124,12 +129,14 @@ class Courier(models.Model):
         from Django 'Courier object'
         """
         courier_inst: Courier = cls.objects.get(courier_id=courier_id)
-        wh: list[str] = [time.since + '-' + time.to for rime in courier_inst.working_hours]
-        regions: list[int] = [region.num for region in courier_inst.regions]
+        wh: list[str] = [str(time.since) + '-' + str(time.to) for time in
+                         courier_inst.working_hours.filter(courier=courier_inst)]
+        regions: list[int] = [region.num for region in courier_inst.regions.filter(courier=courier_inst)]
         courier_type: str = courier_inst.courier_type
         if advanced:
             return serializer.AdvancedCourier(courier_id=courier_id, working_hours=wh, regions=regions,
-                                              courier_type=courier_type, earning=courier_inst.earned_money)
+                                              courier_type=courier_type, earning=courier_inst.earned_money,
+                                              rating=courier_inst.rating)
 
         else:
             return serializer.Courier(courier_id=courier_id, working_hours=wh, regions=regions,

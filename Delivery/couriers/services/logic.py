@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from couriers import models
 
 
-def import_couriers(json) -> tuple:
+def import_couriers(content) -> tuple:
     """
     This function parses the entry
     point for creating
@@ -13,7 +13,15 @@ def import_couriers(json) -> tuple:
     :param json:
     :return tuple:
     """
-    return get_couriers_or_errors(json)
+    return get_couriers_or_errors(content)
+
+
+def get_full_courier_info(courier_id) -> tuple:
+    courier = models.Courier.get_py_dantic_from_django_model(courier_id=courier_id, advanced=True)
+    if courier.rating == 0.0:
+        return courier.json(exclude={'earning'}), 201
+    else:
+        return courier.json()
 
 
 def get_couriers_or_errors(content) -> tuple:
@@ -45,4 +53,3 @@ def create_courier_object_from_collection(collection) -> str:
     return "OK"
 
 
-def get_full_courier_info(courier_id) -> tuple:

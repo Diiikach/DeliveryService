@@ -12,6 +12,11 @@ def create_couriers(request):
 
 
 @require_http_methods(['PATCH', 'GET'])
-def get_courier(request):
-    pass
+def get_courier(request, courier_id):
+    if request.method == 'GET':
+        json, status_code = logic.get_full_courier_info(courier_id)
+
+        return HttpResponse(content=json, status=status_code, content_type='application/json')
+    else:
+        pass
 
