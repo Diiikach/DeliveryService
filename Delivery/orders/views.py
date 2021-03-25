@@ -1,10 +1,14 @@
 from django.views.decorators.http import require_http_methods
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from orders.services import logic
 
 
-@require_http_methods(['GET'])
+@csrf_exempt
+@require_http_methods(['POST'])
 def create_orders(request):
-    pass
+    content, status_code = logic.import_orders(request.body)
+    return HttpResponse(status=status_code, content=content, content_type='application/json')
 
 
 @require_http_methods(['POST'])

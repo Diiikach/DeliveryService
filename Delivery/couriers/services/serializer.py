@@ -28,6 +28,11 @@ class Courier(BaseModel):
             return r
 
 
+class AdvancedCourier(Courier):
+    rating: float
+    earning: int
+
+
 class DataAboutCouriers(BaseModel):
     data: List[Courier]
 
@@ -35,10 +40,6 @@ class DataAboutCouriers(BaseModel):
 class CourierId(BaseModel):
     id: int
 
-
-class AdvancedCourier(Courier):
-    rating: float
-    earning: int
 
 class ResponseCouriers(BaseModel):
     couriers: List[CourierId]

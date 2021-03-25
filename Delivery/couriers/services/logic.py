@@ -10,7 +10,7 @@ def import_couriers(content) -> tuple:
     point for creating
     entities in the database
     and catching errors.
-    :param json:
+    :param content:
     :return tuple:
     """
     return get_couriers_or_errors(content)
