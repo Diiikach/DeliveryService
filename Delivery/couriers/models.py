@@ -90,23 +90,22 @@ class Courier(models.Model):
         return self.rating
 
     @classmethod
-    def create(cls, dantic_object) -> str:
+    def create_or_change(cls, dantic_object, courier_id=None) -> str:
         """
         This function creates 'Courier' object by 'Pydantic'
         object.Also ts creates all depend-object of 'Courier' object and save it.
+        :param courier_id:
         :param dantic_object:
         :return str:
         """
-        try:
-            cls.objects.get(courier_id=dantic_object.courier_id)
-        except:
-            pass
-        else:
-            pass
-        courier_object = cls(courier_id=dantic_object.courier_id, courier_type=dantic_object.courier_type)
-        courier_object.save()
+        if not courier_id:
+            courier_object = cls(courier_id=dantic_object.courier_id, courier_type=dantic_object.courier_type)
+            courier_object.save()
 
-        # Creating 'Workingours' and 'Region' objects to bind that
+        else:
+            courier_object = cls.objects.get(courier_id=courier_id)
+
+        # Creating 'WorkinHours' and 'Region' objects to bind that
         # to new 'Courier' instance
         for timetable in dantic_object.working_hours:
             since, to = timetable.split('-')
@@ -127,6 +126,8 @@ class Courier(models.Model):
         """
         This function return Pydantic 'Courier' object
         from Django 'Courier object'
+        :param advanced:
+        :param courier_id:
         """
         courier_inst: Courier = cls.objects.get(courier_id=courier_id)
         wh: list[str] = [str(time.since) + '-' + str(time.to) for time in

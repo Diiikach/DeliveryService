@@ -48,8 +48,22 @@ def get_couriers_or_errors(content) -> tuple:
 
 def create_courier_object_from_collection(collection) -> str:
     for courier in collection.data:
-        models.Courier.create(courier)
+        models.Courier.create_or_change(dantic_object=courier)
 
     return "OK"
 
 
+def change_courier_info(courier_id, content):
+    dantic_model: dict = models.Courier.get_py_dantic_from_django_model(courier_id=courier_id).dict()
+    changing_fields: dict = json.loads(content)
+    print(type(changing_fields))
+    for key in changing_fields:
+        dantic_model[key] = changing_fields[key]
+
+    try:
+        dantic_model = serializer.Courier.parse_obj(dantic_model)
+    except ValidationError:
+        return '', 400
+
+    models.Courier.create_or_change(dantic_object=dantic_model, courier_id=courier_id) == 'OK'
+    return dantic_model.json(), 200
