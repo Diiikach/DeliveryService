@@ -58,9 +58,9 @@ class Delivery(models.Model):
         order.started = False
         self.orders.objects.remove(self.orders.objects.order_by('weight')[0])
 
-    def complete_order(self, order_id):
+    def complete_order(self, order_id, date_of_complete, courier_id):
         order = self.orders.objects.get(order_id=order_id)
-        order.complete_time = timezone.now()
+        order.complete_time = date_of_complete
         self.weight -= order.weight
         order.started = False
         # Parse datetime string
@@ -73,14 +73,20 @@ class Delivery(models.Model):
         start_seconds = self.last_completed_time.second
         end_seconds = order.complete_time.second
 
-        started = datetime.timedelta(days=start_days, hours=start_hours, minutes=start_minutes, seconds=start_seconds,
-                                     milliseconds=start_ms)
-        ended = datetime.timedelta(days=end_days, hours=end_hours, minutes=end_minutes, seconds=end_seconds,
-                                   milliseconds=end_ms)
+        started = datetime.timedelta(days=start_days, hours=start_hours, minutes=start_minutes, seconds=start_seconds)
+        ended = datetime.timedelta(days=end_days, hours=end_hours, minutes=end_minutes, seconds=end_seconds)
 
         order.region.total_time += (ended.seconds - started.seconds)
         order.region.completed_tasks += 1
         self.last_completed_time = order.complete_time
+        self.orders.objects.remove(order)
+        if len(self.orders) == 0:
+            courier = couriers.objects.filter(delivery=self).copleted_deliveryes
+            courier.add(self)
+            courier.save()
+
+        return 'OK'
+
 
     def get_delivery_weight(self):
         self.weight = sum([order.wright for order in orders.objects.all()])
@@ -93,12 +99,16 @@ class Delivery(models.Model):
         except couriers.model.DoesNotExist:
             return None, None
 
+        if len(courier.delivery.orders.all()) > 0:
+            return [{"courier id": order.order_id} for order in courier.delivery.orders.all()],\
+                   courier.delivery.assign_time
         total_weight = 0
         success_orders = []
         Order = apps.get_model(app_label='orders', model_name='Order')
         orders = Order.objects.order_by('-weight')
         delivery = Delivery()
         delivery.save()
+        courier.delivery = delivery
         for order in orders:
             if order.started is True:
                 print('A')
@@ -156,7 +166,7 @@ class Courier(models.Model):
         If it returns zero, then in JSON will be retured empty list.
         :return int:
         """
-        if self.copleted_deliveryess > 0:
+        if len(self.copleted_deliveryess.all()) > 0:
             pass
         else:
             return 0

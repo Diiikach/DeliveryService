@@ -38,3 +38,9 @@ class AssignOrders(BaseModel):
 
 class CourierId(BaseModel):
     courier_id: int
+
+
+class CompleteOrder(BaseModel):
+    courier_id: int
+    order_id: int
+    complete_time: str

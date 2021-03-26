@@ -38,3 +38,18 @@ def assign_orders(json) -> tuple:
     else:
         return '', 400
 
+
+def complete_order(json) -> tuple:
+    complete_info = serializer.CompleteOrder.parse_raw(json)
+    try:
+        order = models.Order.objects.get(order_id=complete_info.order_id)
+        courier = couriers.models.Courier.objects.get(courier_id=complete_info.courier_id)
+    except Exception:
+        return '', 400
+
+    if order not in courier.delivery.orders.all():
+        return '', 400
+
+    if couriers.models.Delivery.complete_order(order_id=order.order_id, courier_id=courier.courier_id,
+                                               assign_time=complete_info) == 'OK':
+        return complete_info.json(include={'order_id'}), 200

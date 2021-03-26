@@ -21,4 +21,5 @@ def assign_orders(reqeust):
 @csrf_exempt
 @require_http_methods(['POST'])
 def complete_order(request):
-    pass
+    content, status_code = logic.complete_order(request.body)
+    return HttpResponse(status=status_code, content=content, content_type='application/json')
