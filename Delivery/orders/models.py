@@ -17,17 +17,8 @@ class Order(models.Model):
     weight: float = models.FloatField()
     region = models.ForeignKey(to=Region, verbose_name='Active regions', on_delete=models.CASCADE)
     delivery_hours: list = models.ManyToManyField(to=DeliveryHours, verbose_name="delivery_hours", blank=True)
-    executor: Courier = models.ForeignKey(to=Courier, on_delete=models.CASCADE, blank = True,
-                                          verbose_name='Courier that execute order', null=True)
 
     started: bool = models.BooleanField(blank=True, default=False)
-    asign_date: str = models.DateTimeField(blank=True, null=True)
-
-    def assign(self, courier_inst):
-        self.executor = courier_inst
-        self.asign_date = timezone.now()
-        self.save()
-        return self.asign_date
 
     @classmethod
     def create(cls, dataobject) -> str:

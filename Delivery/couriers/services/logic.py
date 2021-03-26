@@ -19,7 +19,7 @@ def import_couriers(content) -> tuple:
 def get_full_courier_info(courier_id) -> tuple:
     courier = models.Courier.get_py_dantic_from_django_model(courier_id=courier_id, advanced=True)
     if courier.rating == 0.0:
-        return courier.json(exclude={'earning'}), 201
+        return courier.json(exclude={'rating'}), 201
     else:
         return courier.json()
 

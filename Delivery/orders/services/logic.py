@@ -2,6 +2,7 @@ from pydantic import ValidationError
 from orders import models
 from orders.services import serializer
 from couriers.services.serializer import ValidationError
+import couriers
 
 
 def import_orders(json) -> tuple:
@@ -24,3 +25,14 @@ def import_orders(json) -> tuple:
         return serializer.InvalidOrders(orders=success_ids).json(), 201
     else:
         return serializer.ValidationError(ValidationError=serializer.InvalidOrders(orders=errors)).json(), 400
+
+
+def assign_orders(json) -> tuple:
+    dataobject = serializer.CourierId.parse_raw(json)
+    success_orders, assign_time = couriers.models.Delivery.assign_orders(courier_id=dataobject.courier_id)
+    if assign_time:
+        print(success_orders)
+        return serializer.AssignOrders(assign_time=assign_time, orders=success_orders).json(), 200
+    else:
+        return '', 400
+

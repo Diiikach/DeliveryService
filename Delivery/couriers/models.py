@@ -1,5 +1,8 @@
+import datetime
 from django.db import models
-from couriers.services import serializer
+from django.apps import apps
+from django.utils import timezone
+from .services import serializer
 
 
 class Region(models.Model):
@@ -35,11 +38,81 @@ class WorkingHours(models.Model):
     since: str = models.TimeField(blank=False, null=False, verbose_name='start of job')
     to: str = models.TimeField(blank=False, null=False, verbose_name='end of job')
 
-    def __str__(self):
-        return self.since + self.to
-
     class Meta:
         verbose_name = 'Hours of Working'
+
+
+class Delivery(models.Model):
+    """
+    Delivery model groups ordders by
+    assign. It depends by Courier object.
+    """
+    assign_time = models.DateTimeField(blank=True, default=timezone.now())
+    orders = models.ManyToManyField(to='orders.Order')
+    weight = models.IntegerField(blank=True, null=True)
+    last_completed_time = models.DateTimeField(blank=True, default=timezone.now())
+
+    def remove_order_by_weight(self):
+        order = self.orders.objects.get(order_id=order_id)
+        self.weight -= order.weight
+        order.started = False
+        self.orders.objects.remove(self.orders.objects.order_by('weight')[0])
+
+    def complete_order(self, order_id):
+        order = self.orders.objects.get(order_id=order_id)
+        order.complete_time = timezone.now()
+        self.weight -= order.weight
+        order.started = False
+        # Parse datetime string
+        start_days = self.last_completed_time.day
+        end_days = order.complete_time.day
+        start_hours = self.last_completed_time.hour
+        end_hours = order.complete_time.hour
+        start_minutes = self.last_completed_time.minute
+        end_minutes = order.complete_time.minute
+        start_seconds = self.last_completed_time.second
+        end_seconds = order.complete_time.second
+
+        started = datetime.timedelta(days=start_days, hours=start_hours, minutes=start_minutes, seconds=start_seconds,
+                                     milliseconds=start_ms)
+        ended = datetime.timedelta(days=end_days, hours=end_hours, minutes=end_minutes, seconds=end_seconds,
+                                   milliseconds=end_ms)
+
+        order.region.total_time += (ended.seconds - started.seconds)
+        order.region.completed_tasks += 1
+        self.last_completed_time = order.complete_time
+
+    def get_delivery_weight(self):
+        self.weight = sum([order.wright for order in orders.objects.all()])
+        return self.weight
+
+    @classmethod
+    def assign_orders(cls, courier_id):
+        try:
+            courier = Courier.objects.get(courier_id=courier_id)
+        except couriers.model.DoesNotExist:
+            return None, None
+
+        total_weight = 0
+        success_orders = []
+        Order = apps.get_model(app_label='orders', model_name='Order')
+        orders = Order.objects.order_by('-weight')
+        delivery = Delivery()
+        delivery.save()
+        for order in orders:
+            for wh in courier.working_hours.all():
+                for order_dh in order.delivery_hours.all():
+                    if order_dh.since >= wh.since and order_dh.to <= wh.to:
+                        print(courier.max_weight)
+                        if total_weight + order.weight <= courier.max_weight:
+                            for region in courier.regions.all():
+                                if region.num == order.region.num:
+                                    total_weight += order.weight
+                                    order.region = region
+                                    success_orders.append({"id": order.order_id})
+                                    delivery.orders.add(order)
+        delivery.weight = total_weight
+        return success_orders, str(delivery.assign_time)
 
 
 class Courier(models.Model):
@@ -56,13 +129,15 @@ class Courier(models.Model):
         'bike': 5,
         'foot': 2,
     }
-
+    max_weight = models.IntegerField(blank=True, null=True)
     working_hours: list = models.ManyToManyField(to=WorkingHours, verbose_name='Hours of Working', blank=True,
                                                  null=True)
     regions: list = models.ManyToManyField(to=Region, verbose_name='Active regions', blank=True)
     earned_money: int = models.IntegerField(verbose_name='earned money', default=0, blank=True)
     rating: float = models.FloatField(verbose_name="courier's rating", default=0, blank=True)
-    completed_tasks: int = models.IntegerField(verbose_name='total delivered orders', default=0, blank=True)
+    delivery: Delivery = models.ForeignKey(to=Delivery, on_delete=models.CASCADE, blank=True, null=True,
+                                           related_name='NowDelivery')
+    copleted_deliveryes = models.ManyToManyField(to=Delivery)
 
     def count_money(self):
         n_courier_type = self.courier_types[self.courier_type]
@@ -76,7 +151,7 @@ class Courier(models.Model):
         If it returns zero, then in JSON will be retured empty list.
         :return int:
         """
-        if self.completed_tasks > 0:
+        if self.copleted_deliveryess > 0:
             pass
         else:
             return 0
@@ -118,6 +193,13 @@ class Courier(models.Model):
             i_region.save()
             courier_object.regions.add(i_region)
 
+        courier_weights = {
+            'car': 50,
+            'bike': 15,
+            'foot': 10,
+        }
+        courier_object.save()
+        courier_object.max_weight = courier_weights[courier_object.courier_type]
         courier_object.save()
         return "OK"
 
@@ -131,8 +213,8 @@ class Courier(models.Model):
         """
         courier_inst: Courier = cls.objects.get(courier_id=courier_id)
         wh: list[str] = [str(time.since) + '-' + str(time.to) for time in
-                         courier_inst.working_hours.filter(courier=courier_inst)]
-        regions: list[int] = [region.num for region in courier_inst.regions.filter(courier=courier_inst)]
+                         courier_inst.working_hours.all()]
+        regions: list[int] = [region.num for region in courier_inst.regions.all()]
         courier_type: str = courier_inst.courier_type
         if advanced:
             return serializer.AdvancedCourier(courier_id=courier_id, working_hours=wh, regions=regions,

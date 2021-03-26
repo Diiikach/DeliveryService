@@ -31,4 +31,10 @@ class ValidationError(BaseModel):
     ValidationError: InvalidOrders
 
 
+class AssignOrders(BaseModel):
+    orders: List[OrderId]
+    assign_time: str
 
+
+class CourierId(BaseModel):
+    courier_id: int

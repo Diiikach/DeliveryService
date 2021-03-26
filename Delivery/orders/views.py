@@ -11,11 +11,14 @@ def create_orders(request):
     return HttpResponse(status=status_code, content=content, content_type='application/json')
 
 
+@csrf_exempt
 @require_http_methods(['POST'])
 def assign_orders(reqeust):
-    pass
+    content, status_code = logic.assign_orders(reqeust.body)
+    return HttpResponse(status=status_code, content=content, content_type='application/json')
 
 
+@csrf_exempt
 @require_http_methods(['POST'])
 def complete_order(request):
     pass

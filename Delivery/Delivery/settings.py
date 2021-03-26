@@ -103,6 +103,7 @@ USE_L10N = True
 
 USE_TZ = True
 
+USE_RFC_3339 = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
