@@ -100,10 +100,13 @@ class Delivery(models.Model):
         delivery = Delivery()
         delivery.save()
         for order in orders:
+            if order.started is True:
+                print('A')
+                continue
+
             for wh in courier.working_hours.all():
                 for order_dh in order.delivery_hours.all():
                     if order_dh.since >= wh.since and order_dh.to <= wh.to:
-                        print(courier.max_weight)
                         if total_weight + order.weight <= courier.max_weight:
                             for region in courier.regions.all():
                                 if region.num == order.region.num:
@@ -111,6 +114,8 @@ class Delivery(models.Model):
                                     order.region = region
                                     success_orders.append({"id": order.order_id})
                                     delivery.orders.add(order)
+                                    order.started = True
+                                    order.save()
         delivery.weight = total_weight
         return success_orders, str(delivery.assign_time)
 
