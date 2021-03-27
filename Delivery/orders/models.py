@@ -17,8 +17,9 @@ class Order(models.Model):
     weight: float = models.FloatField()
     region = models.ForeignKey(to=Region, verbose_name='Active regions', on_delete=models.CASCADE)
     delivery_hours: list = models.ManyToManyField(to=DeliveryHours, verbose_name="delivery_hours", blank=True)
-
+    completed: bool = models.BooleanField(blank=True, default=False)
     started: bool = models.BooleanField(blank=True, default=False)
+    complete_time = models.DateTimeField(blank=True, null=True)
 
     @classmethod
     def create(cls, dataobject) -> str:

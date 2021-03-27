@@ -34,7 +34,7 @@ def assign_orders(json) -> tuple:
         if len(success_orders) == 0:
             return serializer.InvalidOrders(orders=success_orders).json(), 200
         else:
-            return serializer.AssignOrders(assign_time=assign_time, orders=success_orders).json(), 200
+            return serializer.AssignOrders(assign_time=str(assign_time), orders=success_orders).json(), 200
     else:
         return '', 400
 
@@ -47,9 +47,17 @@ def complete_order(json) -> tuple:
     except Exception:
         return '', 400
 
-    if order not in courier.delivery.orders.all():
-        return '', 400
+    if courier.delivery:
+        if order not in courier.delivery.orders.all():
+            print(order)
+            print(courier.delivery.orders.all())
+            return '', 400
 
-    if couriers.models.Delivery.complete_order(order_id=order.order_id, courier_id=courier.courier_id,
-                                               assign_time=complete_info) == 'OK':
-        return complete_info.json(include={'order_id'}), 200
+        if courier.delivery.complete_order(order_id=order.order_id, courier_id=courier.courier_id,
+                                           date_of_complete=complete_info.complete_time) == 'OK':
+            return complete_info.json(include={'order_id'}), 200
+
+        else:
+            return '', 400
+
+    return '', 400

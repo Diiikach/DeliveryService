@@ -59,13 +59,14 @@ class Delivery(models.Model):
         self.orders.objects.remove(self.orders.objects.order_by('weight')[0])
 
     def complete_order(self, order_id, date_of_complete, courier_id):
-        order = self.orders.objects.get(order_id=order_id)
-        order.complete_time = date_of_complete
+        courier = Courier.objects.get(courier_id=courier_id)
+        order = self.orders.get(order_id=order_id)
         self.weight -= order.weight
-        order.started = False
+        order.complete_time = datetime.datetime.strptime(date_of_complete, '%Y-%m-%dT%H:%M:%S.%fZ')
+        order.copleted = True
+        order.save()
+
         # Parse datetime string
-        start_days = self.last_completed_time.day
-        end_days = order.complete_time.day
         start_hours = self.last_completed_time.hour
         end_hours = order.complete_time.hour
         start_minutes = self.last_completed_time.minute
@@ -73,20 +74,19 @@ class Delivery(models.Model):
         start_seconds = self.last_completed_time.second
         end_seconds = order.complete_time.second
 
-        started = datetime.timedelta(days=start_days, hours=start_hours, minutes=start_minutes, seconds=start_seconds)
-        ended = datetime.timedelta(days=end_days, hours=end_hours, minutes=end_minutes, seconds=end_seconds)
+        started = datetime.timedelta(hours=start_hours, minutes=start_minutes, seconds=start_seconds)
+        ended = datetime.timedelta(hours=end_hours, minutes=end_minutes, seconds=end_seconds)
 
         order.region.total_time += (ended.seconds - started.seconds)
         order.region.completed_tasks += 1
         self.last_completed_time = order.complete_time
-        self.orders.objects.remove(order)
-        if len(self.orders) == 0:
-            courier = couriers.objects.filter(delivery=self).copleted_deliveryes
-            courier.add(self)
+        self.orders.remove(order)
+        self.save()
+        if len(self.orders.all()) == 0:
+            courier.copleted_deliveryes.add(self)
             courier.save()
 
-        return 'OK'
-
+        return "OK"
 
     def get_delivery_weight(self):
         self.weight = sum([order.wright for order in orders.objects.all()])
@@ -96,12 +96,13 @@ class Delivery(models.Model):
     def assign_orders(cls, courier_id):
         try:
             courier = Courier.objects.get(courier_id=courier_id)
-        except couriers.model.DoesNotExist:
+        except Exception:
             return None, None
 
-        if len(courier.delivery.orders.all()) > 0:
-            return [{"courier id": order.order_id} for order in courier.delivery.orders.all()],\
-                   courier.delivery.assign_time
+        if courier.delivery:
+            if len(courier.delivery.orders.all()) > 0:
+                return [{"id": order.order_id} for order in courier.delivery.orders.all()], \
+                       courier.delivery.assign_time
         total_weight = 0
         success_orders = []
         Order = apps.get_model(app_label='orders', model_name='Order')
@@ -109,24 +110,25 @@ class Delivery(models.Model):
         delivery = Delivery()
         delivery.save()
         courier.delivery = delivery
+        courier.save()
         for order in orders:
             if order.started is True:
-                print('A')
                 continue
 
             for wh in courier.working_hours.all():
                 for order_dh in order.delivery_hours.all():
-                    if order_dh.since >= wh.since and order_dh.to <= wh.to:
+                    if order_dh.since <= wh.since and order_dh.to >= wh.to:
                         if total_weight + order.weight <= courier.max_weight:
                             for region in courier.regions.all():
                                 if region.num == order.region.num:
                                     total_weight += order.weight
                                     order.region = region
-                                    success_orders.append({"id": order.order_id})
                                     delivery.orders.add(order)
                                     order.started = True
                                     order.save()
         delivery.weight = total_weight
+        delivery.save()
+        success_orders = [{"id": order.order_id} for order in courier.delivery.orders.all()]
         return success_orders, str(delivery.assign_time)
 
 
