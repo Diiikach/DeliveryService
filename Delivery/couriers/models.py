@@ -41,6 +41,9 @@ class WorkingHours(models.Model):
     class Meta:
         verbose_name = 'Hours of Working'
 
+    def __str__(self):
+        return self.since.strftime('%H:%M') + '-' + self.to.strftime('%H:%M')
+
 
 class Delivery(models.Model):
     """
@@ -182,21 +185,16 @@ class Courier(models.Model):
         return self.rating
 
     @classmethod
-    def create_or_change(cls, dantic_object, courier_id=None) -> str:
+    def create(cls, dantic_object) -> str:
         """
         This function creates 'Courier' object by 'Pydantic'
         object.Also ts creates all depend-object of 'Courier' object and save it.
-        :param courier_id:
         :param dantic_object:
         :return str:
         """
-        if not courier_id:
-            courier_object = cls(courier_id=dantic_object.courier_id, courier_type=dantic_object.courier_type)
-            courier_object.save()
 
-        else:
-            courier_object = cls.objects.get(courier_id=courier_id)
-
+        courier_object = cls(courier_id=dantic_object.courier_id, courier_type=dantic_object.courier_type)
+        courier_object.save()
         # Creating 'WorkinHours' and 'Region' objects to bind that
         # to new 'Courier' instance
         for timetable in dantic_object.working_hours:
@@ -229,8 +227,7 @@ class Courier(models.Model):
         :param courier_id:
         """
         courier_inst: Courier = cls.objects.get(courier_id=courier_id)
-        wh: list[str] = [str(time.since) + '-' + str(time.to) for time in
-                         courier_inst.working_hours.all()]
+        wh: list[str] = [str(time) for time in courier_inst.working_hours.all()]
         regions: list[int] = [region.num for region in courier_inst.regions.all()]
         courier_type: str = courier_inst.courier_type
         if advanced:
@@ -241,6 +238,55 @@ class Courier(models.Model):
         else:
             return serializer.Courier(courier_id=courier_id, working_hours=wh, regions=regions,
                                       courier_type=courier_type)
+
+    def create_courier_region(self, region_num):
+        region = Region(num=region_num)
+        region.save()
+        self.regions.add(region)
+        self.save()
+
+    @classmethod
+    def change_courier(cls, courier_id, dantic_object):
+        courier = cls.objects.get(courier_id=courier_id)
+        if dantic_object.regions:
+            if len(dantic_object.regions) == 0:
+                return 'Not'
+            else:
+                for region in courier.regions.all():
+                    if region.num not in dantic_object.regions:
+                        courier.regions.remove(region)
+
+                for region in dantic_object.regions:
+                    if region not in [courier_reg.num for courier_reg in courier.regions.all()]:
+                        courier.create_courier_region(region_num=region)
+
+        if dantic_object.working_hours:
+            if len(dantic_object.working_hours) == 0:
+                return 'Not'
+            else:
+                for wh in courier.working_hours.all():
+                    if str(wh) not in dantic_object.working_hours:
+                        courier.working_hours.remove(wh)
+
+                for wh in dantic_object.working_hours:
+                    if wh not in [str(courier_wh) for courier_wh in courier.working_hours.all()]:
+                        since, to = wh.split('-')
+                        timetable = WorkingHours(since=since, to=to)
+                        timetable.save()
+                        courier.working_hours.add(timetable)
+                        print('d')
+                        courier.save()
+
+        if dantic_object.courier_type:
+            courier.courier_type = dantic_object.courier_type
+            courier_weights = {
+                'car': 50,
+                'bike': 15,
+                'foot': 10,
+            }
+            courier.max_weight = courier_weights[courier.courier_type]
+        courier.save()
+        return "OK"
 
     def __str__(self):
         return f'Courier({self.courier_id})'

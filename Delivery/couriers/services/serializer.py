@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 from couriers import models
 
 
@@ -8,24 +8,28 @@ class Courier(BaseModel):
     'Courier' is Pydantic object, which serialize json structuru
     to python dataclass.
     """
-    courier_id: int
-    courier_type: str
-    regions: List[int]
-    working_hours: List[str]
+    courier_id: int = Field(default=None)
+    courier_type: str = Field(default=None)
+    regions: List[int] = Field(default=None)
+    working_hours: List[str] = Field(default=None)
 
     @validator('working_hours', allow_reuse=True)
     def must_be_more_than_one_in_wh(cls, wh):
-        if len(wh) == 0:
-            raise ValidationError
-        else:
-            return wh
+        if wh:
+            if len(wh) == 0:
+                raise ValidationError
+            else:
+                return wh
+        return None
 
     @validator('regions', allow_reuse=True)
     def little_length(cls, r):
-        if len(r) == 0:
-            raise ValidationError
-        else:
-            return r
+        if r:
+            if len(r) == 0:
+                raise ValidationError
+            else:
+                return r
+        return r
 
 
 class AdvancedCourier(Courier):
