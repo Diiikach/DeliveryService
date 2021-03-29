@@ -6,13 +6,13 @@ Delivery Service - это REST-API сервер для управления ку
 ```pip3 install -r requirements.txt```<br>
 
 <h3>Для того,чтобы запустить сервер - необходимо провести миграции python объектов к базе данных.</h3><br>
-python3 manage.py makemigrations<br>
-python3 manage.py migrate<br>
+$ python3 manage.py makemigrations<br>
+$ python3 manage.py migrate<br>
 В settings.py неоходимо добавить в ALLOWED_HOSTS строку, состоящую из вашего IP, на котором вы намерены запустись сервер
 python3 manage.py runserver 0.0.0.0:8000<br>
 Сервер будет запущен на 8000 порту внешнего ip адреса.
 <h3>Для запуска тестов - необходимо запустить:</h3><br>
-	python3 manage.py test
+	$ python3 manage.py test
 	<br>
 	
 <h1>Информация о проекте:</h1>
