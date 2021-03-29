@@ -20,6 +20,8 @@ class Region(models.Model):
                                                blank=True, default=0)
 
     def get_average_time(self) -> float:
+        if self.completed_tasks == 0:
+            return 0
         self.average_time = self.total_time / self.completed_tasks
         self.save()
         return self.average_time
@@ -54,12 +56,13 @@ class Delivery(models.Model):
     orders = models.ManyToManyField(to='orders.Order')
     weight = models.IntegerField(blank=True, null=True)
     last_completed_time = models.DateTimeField(blank=True, default=timezone.now())
+    courier_type = models.IntegerField()
 
     def remove_order_by_weight(self):
-        order = self.orders.objects.get(order_id=order_id)
+        order = self.orders.order_by('weight')[0]
         self.weight -= order.weight
         order.started = False
-        self.orders.objects.remove(self.orders.objects.order_by('weight')[0])
+        self.orders.remove(order)
 
     def complete_order(self, order_id, date_of_complete, courier_id):
         courier = Courier.objects.get(courier_id=courier_id)
@@ -82,35 +85,39 @@ class Delivery(models.Model):
 
         order.region.total_time += (ended.seconds - started.seconds)
         order.region.completed_tasks += 1
+        order.region.save()
         self.last_completed_time = order.complete_time
         self.orders.remove(order)
         self.save()
         if len(self.orders.all()) == 0:
-            courier.copleted_deliveryes.add(self)
+            courier.completed_deliveryes.add(self)
             courier.save()
 
         return "OK"
 
     def get_delivery_weight(self):
-        self.weight = sum([order.wright for order in orders.objects.all()])
+        self.weight = sum([order.weight for order in self.orders.all()])
         return self.weight
 
     @classmethod
     def assign_orders(cls, courier_id):
+        courier_types = {
+            'car': 9,
+            'bike': 5,
+            'foot': 2,
+        }
         try:
             courier = Courier.objects.get(courier_id=courier_id)
-        except Exception:
+        except Exception as E:
             return None, None
 
         if courier.delivery:
             if len(courier.delivery.orders.all()) > 0:
-                return [{"id": order.order_id} for order in courier.delivery.orders.all()], \
-                       courier.delivery.assign_time
+                return [], courier.delivery.assign_time.isoformat()
         total_weight = 0
-        success_orders = []
         Order = apps.get_model(app_label='orders', model_name='Order')
         orders = Order.objects.order_by('-weight')
-        delivery = Delivery()
+        delivery = Delivery(courier_type=courier_types[courier.courier_type])
         delivery.save()
         courier.delivery = delivery
         courier.save()
@@ -119,20 +126,21 @@ class Delivery(models.Model):
                 continue
 
             for wh in courier.working_hours.all():
-                for order_dh in order.delivery_hours.all():
-                    if order_dh.since <= wh.since and order_dh.to >= wh.to:
-                        if total_weight + order.weight <= courier.max_weight:
-                            for region in courier.regions.all():
-                                if region.num == order.region.num:
-                                    total_weight += order.weight
-                                    order.region = region
-                                    delivery.orders.add(order)
-                                    order.started = True
-                                    order.save()
+                if order.started is False and order.completed is False:
+                    for order_dh in order.delivery_hours.all():
+                        if order_dh.since <= wh.since <= order_dh.to or wh.since <= order_dh.since <= wh.to:
+                            if total_weight + order.weight <= courier.max_weight:
+                                for region in courier.regions.all():
+                                    if region.num == order.region.num:
+                                        total_weight += order.weight
+                                        order.region = region
+                                        delivery.orders.add(order)
+                                        order.started = True
+                                        order.save()
         delivery.weight = total_weight
         delivery.save()
         success_orders = [{"id": order.order_id} for order in courier.delivery.orders.all()]
-        return success_orders, str(delivery.assign_time)
+        return success_orders, str(delivery.assign_time.isoformat())
 
 
 class Courier(models.Model):
@@ -157,13 +165,13 @@ class Courier(models.Model):
     rating: float = models.FloatField(verbose_name="courier's rating", default=0, blank=True)
     delivery: Delivery = models.ForeignKey(to=Delivery, on_delete=models.CASCADE, blank=True, null=True,
                                            related_name='NowDelivery')
-    copleted_deliveryes = models.ManyToManyField(to=Delivery)
+    completed_deliveryes = models.ManyToManyField(to=Delivery)
 
     def count_money(self):
-        n_courier_type = self.courier_types[self.courier_type]
-        for i in range(self.completed_tasks):
-            self.total_sum += 500 * n_courier_type
+        for delivery in self.completed_deliveryes.all():
+            self.earned_money += 500 * delivery.courier_type
             self.save()
+        return self.earned_money
 
     def count_rating(self) -> float:
         """
@@ -171,13 +179,13 @@ class Courier(models.Model):
         If it returns zero, then in JSON will be retured empty list.
         :return int:
         """
-        if len(self.copleted_deliveryess.all()) > 0:
+        if len(self.completed_deliveryes.all()) > 0:
             pass
         else:
             return 0
         average_time = list()
-        for region in self.regions:
-            average_time.append(region.average_time)
+        for region in self.regions.all():
+            average_time.append(region.get_average_time())
 
         min_time = min(average_time)
         self.rating = (60 * 60 - min(min_time, 60 * 60)) / (60 * 60) * 5
@@ -232,8 +240,9 @@ class Courier(models.Model):
         courier_type: str = courier_inst.courier_type
         if advanced:
             return serializer.AdvancedCourier(courier_id=courier_id, working_hours=wh, regions=regions,
-                                              courier_type=courier_type, earning=courier_inst.earned_money,
-                                              rating=courier_inst.rating)
+                                              courier_type=courier_type,
+                                              earning=courier_inst.count_money(),
+                                              rating=courier_inst.count_rating())
 
         else:
             return serializer.Courier(courier_id=courier_id, working_hours=wh, regions=regions,
@@ -250,7 +259,7 @@ class Courier(models.Model):
         courier = cls.objects.get(courier_id=courier_id)
         if dantic_object.regions:
             if len(dantic_object.regions) == 0:
-                return 'Not'
+                return '{"Error": "Field regions is empty"}'
             else:
                 for region in courier.regions.all():
                     if region.num not in dantic_object.regions:
@@ -262,7 +271,7 @@ class Courier(models.Model):
 
         if dantic_object.working_hours:
             if len(dantic_object.working_hours) == 0:
-                return 'Not'
+                return '{"Error": "Field working_hours is empty"}'
             else:
                 for wh in courier.working_hours.all():
                     if str(wh) not in dantic_object.working_hours:
@@ -274,7 +283,6 @@ class Courier(models.Model):
                         timetable = WorkingHours(since=since, to=to)
                         timetable.save()
                         courier.working_hours.add(timetable)
-                        print('d')
                         courier.save()
 
         if dantic_object.courier_type:
@@ -286,7 +294,38 @@ class Courier(models.Model):
             }
             courier.max_weight = courier_weights[courier.courier_type]
         courier.save()
+        courier.reassign_orders()
         return "OK"
+
+    def reassign_orders(self):
+        if self.delivery:
+            pass
+        else:
+            return "OK"
+        while self.max_weight - self.delivery.get_delivery_weight() < 0:
+            for order in self.delivery.orders.all():
+                if order.weight > self.max_weight:
+                    self.delivery.orders.remove(order)
+                    continue
+
+            self.delivery.remove_order_by_weight()
+
+        for order in self.delivery.orders.all():
+            meets_requirements = False
+            for wh in self.working_hours.all():
+                for order_dh in order.delivery_hours.all():
+                    if order_dh.since <= wh.since <= order_dh.to or wh.since <= order_dh.since <= wh.to:
+                        for region in self.regions.all():
+                            if region.num == order.region.num:
+                                meets_requirements = True
+            if meets_requirements:
+                pass
+            else:
+                order.started = False
+                self.delivery.orders.remove(order)
+                order.save()
+
+            self.delivery.save()
 
     def __str__(self):
         return f'Courier({self.courier_id})'

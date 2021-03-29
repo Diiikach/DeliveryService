@@ -9,12 +9,17 @@ def import_orders(json) -> tuple:
     errors = []
     success_ids = []
     success_objects = []
-    orders = serializer.DataAboutOrders.parse_raw(json).data
+    try:
+        orders = serializer.DataAboutOrders.parse_raw(json).data
+    except Exception:
+        return '{"Error":"Invalid JSON format"}', 400
+
     for order in orders:
         order_dict = order.dict()
         for field in order_dict.keys():
             if order_dict[field] is None:
-                errors.append(serializer.OrderId(id=order.order_id))
+                if serializer.OrderId(id=order.order_id) not in errors:
+                    errors.append(serializer.OrderId(id=order.order_id))
                 break
         else:
             success_objects.append(order)
@@ -31,8 +36,10 @@ def assign_orders(json) -> tuple:
     dataobject = serializer.CourierId.parse_raw(json)
     success_orders, assign_time = couriers.models.Delivery.assign_orders(courier_id=dataobject.courier_id)
     if assign_time:
-        if len(success_orders) == 0:
+        if len(success_orders) == 0 and len(str(assign_time)) == 0:
             return serializer.InvalidOrders(orders=success_orders).json(), 200
+        elif len(success_orders) == 0 and len(str(assign_time)) != 0:
+            return serializer.AssignOrders(assign_time=str(assign_time), orders=success_orders).json(), 200
         else:
             return serializer.AssignOrders(assign_time=str(assign_time), orders=success_orders).json(), 200
     else:
@@ -49,8 +56,6 @@ def complete_order(json) -> tuple:
 
     if courier.delivery:
         if order not in courier.delivery.orders.all():
-            print(order)
-            print(courier.delivery.orders.all())
             return '', 400
 
         if courier.delivery.complete_order(order_id=order.order_id, courier_id=courier.courier_id,

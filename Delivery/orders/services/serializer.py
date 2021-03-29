@@ -8,8 +8,10 @@ class Order(BaseModel):
     region: int = Field(default=None)
     delivery_hours: List[str] = Field(default=None)
 
-    @validator('delivery_hours', allow_reuse=True)
+    @validator('delivery_hours')
     def must_be_more_than_one_in_wh(cls, dh):
+        if not dh:
+            return dh
         if len(dh) == 0:
             dh = None
         return dh
@@ -32,8 +34,8 @@ class ValidationError(BaseModel):
 
 
 class AssignOrders(BaseModel):
-    orders: List[OrderId]
-    assign_time: str
+    orders: List[OrderId] = Field(default=None)
+    assign_time: str = Field(default=None)
 
 
 class CourierId(BaseModel):
