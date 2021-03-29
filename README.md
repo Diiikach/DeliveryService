@@ -2,6 +2,9 @@ Delivery Service - это REST-API сервер для управления ку
 <h1>Instalation guide:</h1>
 
 ```git clone https://github.com/mikacha/DeliveryService```<br>
+```virtualenv env```<br>
+```source env/bin/activate```<br>
+```cd DeliveryService/Delivery```<br>
 ```cd DeliveryService/Delivery```<br>
 ```pip3 install -r requirements.txt```<br>
 
