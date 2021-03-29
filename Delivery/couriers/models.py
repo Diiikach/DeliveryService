@@ -69,7 +69,7 @@ class Delivery(models.Model):
         order = self.orders.get(order_id=order_id)
         self.weight -= order.weight
         order.complete_time = datetime.datetime.strptime(date_of_complete, '%Y-%m-%dT%H:%M:%S.%fZ')
-        order.copleted = True
+        order.completed = True
         order.save()
 
         # Parse datetime string
@@ -83,9 +83,10 @@ class Delivery(models.Model):
         started = datetime.timedelta(hours=start_hours, minutes=start_minutes, seconds=start_seconds)
         ended = datetime.timedelta(hours=end_hours, minutes=end_minutes, seconds=end_seconds)
 
-        order.region.total_time += (ended.seconds - started.seconds)
-        order.region.completed_tasks += 1
+        order.region.total_time -= (ended.seconds - started.seconds)
         order.region.save()
+        order.region.completed_tasks += 1
+        print('Region ' + str(order.region.get_average_time()))
         self.last_completed_time = order.complete_time
         self.orders.remove(order)
         self.save()
@@ -188,7 +189,7 @@ class Courier(models.Model):
             average_time.append(region.get_average_time())
 
         min_time = min(average_time)
-        self.rating = (60 * 60 - min(min_time, 60 * 60)) / (60 * 60) * 5
+        self.rating = round((60*60 - min(min_time, 60*60))/(60*60) * 5, 1)
         self.save()
         return self.rating
 

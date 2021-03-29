@@ -31,10 +31,13 @@ class Order(models.Model):
         django_order.region = region
         django_order.save()
         for timetable in dataobject.delivery_hours:
-            since, to = timetable.split('-')
+            try:
+                since, to = timetable.split('-')
+            except Exception:
+                return "NOT"
             timetable_inst = DeliveryHours(since=since, to=to)
             timetable_inst.save()
             django_order.delivery_hours.add(timetable_inst)
-
+        return 'OK'
     def __str__(self) -> str:
         return f'Order({self.order_id})'

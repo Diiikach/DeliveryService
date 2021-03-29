@@ -230,4 +230,43 @@ changed_type_courier = """
     }
 """
 
-valid_full_user_ifo = '{"courier_id": 1, "courier_type": "foot", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"], "rating": 5.0, "earning": 4500}'
+valid_full_user_ifo = '{"courier_id": 1, "courier_type": "foot", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"], "earning": 0}'
+
+load_couriers_final = """
+    {
+    "data": [
+{
+    "courier_id": 1,
+    "courier_type": "car",
+    "regions": [1, 12, 22]
+}]}
+"""
+
+load_orders_final = """
+{
+ "data": [
+        {
+            "order_id": 1,
+            "weight": 30,
+            "region": 12,
+            "delivery_hours": ["10:00-11:00"]
+        },
+        {
+            "order_id": 2,
+            "weight": 5,
+            "region": 22,
+            "delivery_hours": ["10:00-12:00"]
+        },
+        {
+            "order_id": 3,
+            "weight": 45,
+            "region": 12,
+            "delivery_hours": ["09:00-15:30"]
+        }
+
+    ]
+    }
+"""
+
+current_assign_resp = '{"orders": [{"id": 2}, {"id": 3}], "assign_time": "2021-03-29T18:04:00.973003+00:00"]}'
+current_full_info_ans = '{"courier_id": 1, "courier_type": "car", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"], "rating": 5.0, "earning": 4500}'

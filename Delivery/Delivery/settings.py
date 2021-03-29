@@ -1,4 +1,6 @@
 from pathlib import Path
+import logging
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -89,7 +91,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
@@ -102,6 +103,7 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
 
 USE_RFC_3339 = True
 

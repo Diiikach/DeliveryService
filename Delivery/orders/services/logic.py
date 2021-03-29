@@ -26,15 +26,22 @@ def import_orders(json) -> tuple:
             success_ids.append(serializer.OrderId(id=order.order_id))
     if len(errors) == 0:
         for dataobject in success_objects:
-            models.Order.create(dataobject=dataobject)
+            if models.Order.create(dataobject=dataobject) == "OK":
+                pass
+            else:
+                return '{"Error":"Invalid JSON format"}', 400
         return serializer.InvalidOrders(orders=success_ids).json(), 201
     else:
         return serializer.ValidationError(ValidationError=serializer.InvalidOrders(orders=errors)).json(), 400
 
 
 def assign_orders(json) -> tuple:
-    dataobject = serializer.CourierId.parse_raw(json)
-    success_orders, assign_time = couriers.models.Delivery.assign_orders(courier_id=dataobject.courier_id)
+    try:
+        dataobject = serializer.CourierId.parse_raw(json)
+        success_orders, assign_time = couriers.models.Delivery.assign_orders(courier_id=dataobject.courier_id)
+    except Exception:
+        return '{"Error": "invalid json"}', 400
+
     if assign_time:
         if len(success_orders) == 0 and len(str(assign_time)) == 0:
             return serializer.InvalidOrders(orders=success_orders).json(), 200
@@ -66,3 +73,4 @@ def complete_order(json) -> tuple:
             return '', 400
 
     return '', 400
+

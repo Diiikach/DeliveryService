@@ -19,7 +19,7 @@ def import_couriers(content) -> tuple:
 def get_full_courier_info(courier_id) -> tuple:
     try:
         courier = models.Courier.get_py_dantic_from_django_model(courier_id=courier_id, advanced=True)
-    except Exception:
+    except Exception as E:
         return '', 404
     if courier.rating == 0.0:
         return courier.json(exclude={'rating'}), 200
@@ -37,7 +37,10 @@ def get_couriers_or_errors(content) -> tuple:
     dict_couriers = couriers.dict()['data']
     for courier in dict_couriers:
         for key in courier.keys():
+
             if courier[key] is None:
+                if courier['courier_id'] is None:
+                    return '{"Error": "Invalid json format"}', 400
                 if serializer.CourierId(id=courier['courier_id']) not in errors:
                     errors.append(serializer.CourierId(id=courier['courier_id']))
 
