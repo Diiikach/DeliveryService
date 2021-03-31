@@ -1,7 +1,6 @@
 import datetime
 from django.db import models
 from django.apps import apps
-from django.utils import timezone
 from .services import serializer
 
 
@@ -52,10 +51,10 @@ class Delivery(models.Model):
     Delivery model groups ordders by
     assign. It depends by Courier object.
     """
-    assign_time = models.DateTimeField(blank=True, default=timezone.now())
+    assign_time = models.DateTimeField(blank=True, default=datetime.datetime.now())
     orders = models.ManyToManyField(to='orders.Order')
     weight = models.IntegerField(blank=True, null=True)
-    last_completed_time = models.DateTimeField(blank=True, default=timezone.now())
+    last_completed_time = models.DateTimeField(blank=True, default=datetime.datetime.now())
     courier_type = models.IntegerField()
 
     def remove_order_by_weight(self):
@@ -73,6 +72,8 @@ class Delivery(models.Model):
         order.save()
 
         # Parse datetime string
+        start_days = self.last_completed_time.day
+        end_days = order.complete_time.day
         start_hours = self.last_completed_time.hour
         end_hours = order.complete_time.hour
         start_minutes = self.last_completed_time.minute
@@ -80,13 +81,12 @@ class Delivery(models.Model):
         start_seconds = self.last_completed_time.second
         end_seconds = order.complete_time.second
 
-        started = datetime.timedelta(hours=start_hours, minutes=start_minutes, seconds=start_seconds)
-        ended = datetime.timedelta(hours=end_hours, minutes=end_minutes, seconds=end_seconds)
+        started = datetime.timedelta(days=start_days, hours=start_hours, minutes=start_minutes, seconds=start_seconds)
+        ended = datetime.timedelta(days=start_days, hours=end_hours, minutes=end_minutes, seconds=end_seconds)
 
-        order.region.total_time -= (ended.seconds - started.seconds)
+        order.region.total_time += (ended.seconds - started.seconds)
         order.region.save()
         order.region.completed_tasks += 1
-        print('Region ' + str(order.region.get_average_time()))
         self.last_completed_time = order.complete_time
         self.orders.remove(order)
         self.save()
@@ -186,6 +186,7 @@ class Courier(models.Model):
             return 0
         average_time = list()
         for region in self.regions.all():
+            print(region.get_average_time())
             average_time.append(region.get_average_time())
 
         min_time = min(average_time)

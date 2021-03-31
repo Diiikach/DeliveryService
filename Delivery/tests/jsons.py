@@ -204,7 +204,7 @@ complete_order_1 = """
         {
 "courier_id": 1,
 "order_id": 1,
-"complete_time": "2021-01-10T10:33:01.42Z"
+"complete_time": "2021-01-10T23:33:01.42Z"
 }
 """
 
@@ -303,3 +303,11 @@ load_orders_final2 = """
 
 current_assign_resp = '{"orders": [{"id": 2}, {"id": 3}], "assign_time": "2021-03-29T18:04:00.973003+00:00"]}'
 current_full_info_ans = '{"courier_id": 1, "courier_type": "car", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"], "rating": 5.0, "earning": 4500}'
+
+complete_order_4 = """
+        {
+"courier_id": 1,
+"order_id": 4,
+"complete_time": "2021-03-31T23:33:01.42Z"
+}
+"""

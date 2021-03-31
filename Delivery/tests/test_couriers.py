@@ -1,6 +1,5 @@
 from django.test import TestCase
 from . import jsons
-from django.test import Client
 
 
 class CreatingCouriers(TestCase):

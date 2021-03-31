@@ -39,5 +39,6 @@ class Order(models.Model):
             timetable_inst.save()
             django_order.delivery_hours.add(timetable_inst)
         return 'OK'
+
     def __str__(self) -> str:
         return f'Order({self.order_id})'

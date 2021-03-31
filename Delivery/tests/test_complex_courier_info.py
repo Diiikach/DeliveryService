@@ -3,6 +3,7 @@ from django.test import TestCase
 from . import jsons
 import requests
 import datetime
+from django.utils import timezone
 
 
 class IntegrationTest(TestCase):
@@ -41,7 +42,7 @@ class IntegrationTest(TestCase):
                          jsons.current_assign_resp.split('"assign_time"')[0])
 
         data = json.loads(jsons.complete_order_2)
-        data["complete_time"] = str(datetime.datetime.now().isoformat())  + 'Z'
+        data["complete_time"] = str(datetime.datetime.now().isoformat()) + 'Z'
         data = json.dumps(data)
         self.assertEqual(self.client.post('http://127.0.0.1:8000/orders/complete', data,
                                           content_type='text').status_code, 200)
@@ -64,10 +65,29 @@ class IntegrationTest(TestCase):
                                     content_type='text')
         self.assertEqual(assigned.status_code, 200)
 
-        data = json.loads(jsons.complete_order_3)
+        data = json.loads(jsons.complete_order_1)
         data["complete_time"] = str(datetime.datetime.now().isoformat()) + 'Z'
         data = json.dumps(data)
         competed = self.client.post('http://127.0.0.1:8000/orders/complete', data, content_type='text')
         self.assertEqual(competed.status_code, 200)
+        courier_info = self.client.get('http://127.0.0.1:8000/couriers/1')
+
+        data = json.loads(jsons.complete_order_2)
+        data["complete_time"] = str(datetime.datetime.now().isoformat()) + 'Z'
+        data = json.dumps(data)
+
+        self.client.post('http://127.0.0.1:8000/orders/complete', data, content_type='text')
+
+        data = json.loads(jsons.complete_order_3)
+        data["complete_time"] = str(datetime.datetime.now().isoformat()) + 'Z'
+        data = json.dumps(data)
+
+        self.client.post('http://127.0.0.1:8000/orders/complete', data, content_type='text')
+
+        data = json.loads(jsons.complete_order_4)
+        data['complete_time'] = '2021-04-01T10:30:01.23Z'
+        data = json.dumps(data)
+
+        self.client.post('http://127.0.0.1:8000/orders/complete', data, content_type='text')
         courier_info = self.client.get('http://127.0.0.1:8000/couriers/1')
         print(courier_info.content)
