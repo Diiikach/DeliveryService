@@ -178,7 +178,7 @@ class Courier(models.Model):
         """
         This function counts rating of Courier instance.
         If it returns zero, then in JSON will be retured empty list.
-        :return int:
+        :return float:
         """
         if len(self.completed_deliveryes.all()) > 0:
             pass
@@ -249,14 +249,21 @@ class Courier(models.Model):
             return serializer.Courier(courier_id=courier_id, working_hours=wh, regions=regions,
                                       courier_type=courier_type)
 
-    def create_courier_region(self, region_num):
+    def create_courier_region(self, region_num) -> None:
         region = Region(num=region_num)
         region.save()
         self.regions.add(region)
         self.save()
 
     @classmethod
-    def change_courier(cls, courier_id, dantic_object):
+    def change_courier(cls, courier_id, dantic_object) -> str:
+        """
+        Function changing courier object by fields, which are transmetted
+        in JSON.
+        :param courier_id:
+        :param dantic_object:
+        :return str:
+        """
         courier = cls.objects.get(courier_id=courier_id)
         if dantic_object.regions:
             if len(dantic_object.regions) == 0:
@@ -298,7 +305,12 @@ class Courier(models.Model):
         courier.reassign_orders()
         return "OK"
 
-    def reassign_orders(self):
+    def reassign_orders(self) -> None:
+        """
+        After changing Courier object - all objects, which depend on this object
+        must be changed also. This function changins those objects.
+        :return None:
+        """
         if self.delivery:
             pass
         else:

@@ -268,5 +268,38 @@ load_orders_final = """
     }
 """
 
+load_orders_final2 = """
+{
+ "data": [
+        {
+            "order_id": 1,
+            "weight": 30,
+            "region": 12,
+            "delivery_hours": ["10:00-11:00"]
+        },
+        {
+            "order_id": 2,
+            "weight": 4,
+            "region": 22,
+            "delivery_hours": ["10:00-12:00"]
+        },
+        {
+            "order_id": 3,
+            "weight": 3,
+            "region": 12,
+            "delivery_hours": ["09:00-15:30"]
+        },
+        {
+            "order_id": 4,
+            "weight": 3,
+            "region": 22,
+            "delivery_hours": ["09:00-15:30"]
+        }
+
+    ]
+    }
+"""
+
+
 current_assign_resp = '{"orders": [{"id": 2}, {"id": 3}], "assign_time": "2021-03-29T18:04:00.973003+00:00"]}'
 current_full_info_ans = '{"courier_id": 1, "courier_type": "car", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"], "rating": 5.0, "earning": 4500}'
