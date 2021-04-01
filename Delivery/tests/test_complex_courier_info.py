@@ -90,4 +90,4 @@ class IntegrationTest(TestCase):
 
         self.client.post('http://127.0.0.1:8000/orders/complete', data, content_type='text')
         courier_info = self.client.get('http://127.0.0.1:8000/couriers/1')
-        print(courier_info.content)
+        self.assertEqual(courier_info.status_code, 200)

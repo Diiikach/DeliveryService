@@ -85,7 +85,7 @@ change_courier_type_valid = """
     }
 """
 
-change_courier_type_valid_ans =  '{"courier_id": 1, "courier_type": "car", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"]}'
+change_courier_type_valid_ans = '{"courier_id": 1, "courier_type": "car", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"]}'
 
 valid_orders_json_load = """
    {
@@ -300,7 +300,6 @@ load_orders_final2 = """
     }
 """
 
-
 current_assign_resp = '{"orders": [{"id": 2}, {"id": 3}], "assign_time": "2021-03-29T18:04:00.973003+00:00"]}'
 current_full_info_ans = '{"courier_id": 1, "courier_type": "car", "regions": [1, 12, 22], "working_hours": ["11:35-14:05", "09:00-11:00"], "rating": 5.0, "earning": 4500}'
 
@@ -311,3 +310,5 @@ complete_order_4 = """
 "complete_time": "2021-03-31T23:33:01.42Z"
 }
 """
+
+assign_to_other_courier_ans = '{"orders": [], "assign_time": "2021-04-01T11:00:19.163108"}'

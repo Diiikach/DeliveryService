@@ -4,6 +4,9 @@ from django.utils import timezone
 
 
 class DeliveryHours(WorkingHours):
+    """
+    Other named inst of WorkingHours.
+    """
     class Meta:
         verbose_name = "delivery_hours"
 
