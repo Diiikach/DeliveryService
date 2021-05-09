@@ -343,3 +343,4 @@ class Courier(models.Model):
 
     def __str__(self):
         return f'Courier({self.courier_id})'
+   
