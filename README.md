@@ -1,4 +1,4 @@
-Delivery Service - это REST-API сервер для управления курьерами и назначения им заказов.
+Delivery Service - это REST-API серве в виде pet проекта 
 <h1>Instalation guide:</h1>
 
 ```git clone https://github.com/mikacha/DeliveryService```<br>
