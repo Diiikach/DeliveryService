@@ -11,8 +11,8 @@ Delivery Service - это REST-API серве в виде pet проекта
 <h3>Для того,чтобы запустить сервер - необходимо провести миграции python объектов к базе данных.</h3><br>
 <h4>$ python3 manage.py makemigrations</h4><br>
 <h4>$ python3 manage.py migrate</h4><br>
-В settings.py неоходимо добавить в ALLOWED_HOSTS строку, состоящую из вашего IP, на котором вы намерены запустись сервер
-python3 manage.py runserver 0.0.0.0:8000<br>
+В settings.py неоходимо добавить в ALLOWED_HOSTS строку, состоящую из вашего IP, на котором вы намерены запустись сервер<br>
+$ python3 manage.py runserver 0.0.0.0:8000<br>
 Сервер будет запущен на 8000 порту внешнего ip адреса.
 <h3>Для запуска тестов - необходимо запустить:</h3><br>
 	<h4>$ python3 manage.py test.</h4>
